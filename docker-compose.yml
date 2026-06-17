@@ -1,0 +1,244 @@
+# =============================================================================
+# Lab Morris Worm - infraestrutura
+#
+# Topologia:
+#   - 5 sub-redes /24 (lab_net_01 .. lab_net_05) em 172.28.0.0/16
+#   - 5 vítimas idênticas por sub-rede (25 no total), todas rodam o servidor
+#     vulnerável (BOF) em ./alvo_vulneravel na porta 9090
+#   - 1 roteador interno conectado às 5 sub-redes com ip_forward=1
+#     (gateway .254 de cada sub-rede)
+#   - 1 atacante na sub-rede 01 (entry point do worm)
+#
+# Endereçamento:
+#   lab_net_01  172.28.1.0/24   vitima_01..05  .10-.14    atacante .100   gw .254
+#   lab_net_02  172.28.2.0/24   vitima_06..10  .10-.14                    gw .254
+#   lab_net_03  172.28.3.0/24   vitima_11..15  .10-.14                    gw .254
+#   lab_net_04  172.28.4.0/24   vitima_16..20  .10-.14                    gw .254
+#   lab_net_05  172.28.5.0/24   vitima_21..25  .10-.14                    gw .254
+# =============================================================================
+
+x-vitima: &vitima
+  build: ./alvo_vulneravel
+  image: morris-vitima
+  security_opt:
+    - seccomp:unconfined
+  cap_add: [NET_ADMIN, NET_RAW]
+  restart: unless-stopped
+
+services:
+
+  # ---------- ROTEADOR INTERNO ----------
+  roteador:
+    build: ./roteador
+    image: morris-roteador
+    container_name: roteador
+    cap_add: [NET_ADMIN]
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.254 }
+      lab_net_02: { ipv4_address: 172.28.2.254 }
+      lab_net_03: { ipv4_address: 172.28.3.254 }
+      lab_net_04: { ipv4_address: 172.28.4.254 }
+      lab_net_05: { ipv4_address: 172.28.5.254 }
+
+  # ---------- ATACANTE ----------
+  atacante:
+    build: ./atacante
+    image: morris-atacante
+    container_name: atacante
+    cap_add: [NET_ADMIN, NET_RAW]
+    security_opt:
+      - seccomp:unconfined
+    tty: true
+    stdin_open: true
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.100 }
+    depends_on: [roteador]
+
+  # ---------- VÍTIMAS - sub-rede 01 ----------
+  vitima_01:
+    <<: *vitima
+    container_name: vitima_01
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.10 }
+    depends_on: [roteador]
+  vitima_02:
+    <<: *vitima
+    container_name: vitima_02
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.11 }
+    depends_on: [roteador]
+  vitima_03:
+    <<: *vitima
+    container_name: vitima_03
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.12 }
+    depends_on: [roteador]
+  vitima_04:
+    <<: *vitima
+    container_name: vitima_04
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.13 }
+    depends_on: [roteador]
+  vitima_05:
+    <<: *vitima
+    container_name: vitima_05
+    networks:
+      lab_net_01: { ipv4_address: 172.28.1.14 }
+    depends_on: [roteador]
+
+  # ---------- VÍTIMAS - sub-rede 02 ----------
+  vitima_06:
+    <<: *vitima
+    container_name: vitima_06
+    networks:
+      lab_net_02: { ipv4_address: 172.28.2.10 }
+    depends_on: [roteador]
+  vitima_07:
+    <<: *vitima
+    container_name: vitima_07
+    networks:
+      lab_net_02: { ipv4_address: 172.28.2.11 }
+    depends_on: [roteador]
+  vitima_08:
+    <<: *vitima
+    container_name: vitima_08
+    networks:
+      lab_net_02: { ipv4_address: 172.28.2.12 }
+    depends_on: [roteador]
+  vitima_09:
+    <<: *vitima
+    container_name: vitima_09
+    networks:
+      lab_net_02: { ipv4_address: 172.28.2.13 }
+    depends_on: [roteador]
+  vitima_10:
+    <<: *vitima
+    container_name: vitima_10
+    networks:
+      lab_net_02: { ipv4_address: 172.28.2.14 }
+    depends_on: [roteador]
+
+  # ---------- VÍTIMAS - sub-rede 03 ----------
+  vitima_11:
+    <<: *vitima
+    container_name: vitima_11
+    networks:
+      lab_net_03: { ipv4_address: 172.28.3.10 }
+    depends_on: [roteador]
+  vitima_12:
+    <<: *vitima
+    container_name: vitima_12
+    networks:
+      lab_net_03: { ipv4_address: 172.28.3.11 }
+    depends_on: [roteador]
+  vitima_13:
+    <<: *vitima
+    container_name: vitima_13
+    networks:
+      lab_net_03: { ipv4_address: 172.28.3.12 }
+    depends_on: [roteador]
+  vitima_14:
+    <<: *vitima
+    container_name: vitima_14
+    networks:
+      lab_net_03: { ipv4_address: 172.28.3.13 }
+    depends_on: [roteador]
+  vitima_15:
+    <<: *vitima
+    container_name: vitima_15
+    networks:
+      lab_net_03: { ipv4_address: 172.28.3.14 }
+    depends_on: [roteador]
+
+  # ---------- VÍTIMAS - sub-rede 04 ----------
+  vitima_16:
+    <<: *vitima
+    container_name: vitima_16
+    networks:
+      lab_net_04: { ipv4_address: 172.28.4.10 }
+    depends_on: [roteador]
+  vitima_17:
+    <<: *vitima
+    container_name: vitima_17
+    networks:
+      lab_net_04: { ipv4_address: 172.28.4.11 }
+    depends_on: [roteador]
+  vitima_18:
+    <<: *vitima
+    container_name: vitima_18
+    networks:
+      lab_net_04: { ipv4_address: 172.28.4.12 }
+    depends_on: [roteador]
+  vitima_19:
+    <<: *vitima
+    container_name: vitima_19
+    networks:
+      lab_net_04: { ipv4_address: 172.28.4.13 }
+    depends_on: [roteador]
+  vitima_20:
+    <<: *vitima
+    container_name: vitima_20
+    networks:
+      lab_net_04: { ipv4_address: 172.28.4.14 }
+    depends_on: [roteador]
+
+  # ---------- VÍTIMAS - sub-rede 05 ----------
+  vitima_21:
+    <<: *vitima
+    container_name: vitima_21
+    networks:
+      lab_net_05: { ipv4_address: 172.28.5.10 }
+    depends_on: [roteador]
+  vitima_22:
+    <<: *vitima
+    container_name: vitima_22
+    networks:
+      lab_net_05: { ipv4_address: 172.28.5.11 }
+    depends_on: [roteador]
+  vitima_23:
+    <<: *vitima
+    container_name: vitima_23
+    networks:
+      lab_net_05: { ipv4_address: 172.28.5.12 }
+    depends_on: [roteador]
+  vitima_24:
+    <<: *vitima
+    container_name: vitima_24
+    networks:
+      lab_net_05: { ipv4_address: 172.28.5.13 }
+    depends_on: [roteador]
+  vitima_25:
+    <<: *vitima
+    container_name: vitima_25
+    networks:
+      lab_net_05: { ipv4_address: 172.28.5.14 }
+    depends_on: [roteador]
+
+networks:
+  lab_net_01:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
+  lab_net_02:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.2.0/24
+  lab_net_03:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.3.0/24
+  lab_net_04:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.4.0/24
+  lab_net_05:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.5.0/24

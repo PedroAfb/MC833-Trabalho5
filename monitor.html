@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Monitor Morris Worm</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #1e1e1e; color: #fff; }
+    #hdr { padding: 10px 16px; font-size: 18px; border-bottom: 1px solid #333; }
+    #count { font-weight: bold; }
+    #net { height: calc(100vh - 50px); width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="hdr">Monitor de infecção — <span id="count">0 / 25</span></div>
+  <div id="net"></div>
+  <script>
+    const SUBNETS = {
+      lab_net_01: ["vitima_01","vitima_02","vitima_03","vitima_04","vitima_05"],
+      lab_net_02: ["vitima_06","vitima_07","vitima_08","vitima_09","vitima_10"],
+      lab_net_03: ["vitima_11","vitima_12","vitima_13","vitima_14","vitima_15"],
+      lab_net_04: ["vitima_16","vitima_17","vitima_18","vitima_19","vitima_20"],
+      lab_net_05: ["vitima_21","vitima_22","vitima_23","vitima_24","vitima_25"],
+    };
+
+    const nodes = new vis.DataSet();
+    const edges = new vis.DataSet();
+
+    nodes.add({id:"roteador", label:"roteador", color:"#bbbbbb", shape:"diamond", size:30});
+    nodes.add({id:"atacante", label:"atacante", color:"#ff8c00", shape:"triangle", size:28});
+    edges.add({from:"atacante", to:"roteador"});
+
+    for (const [s, vs] of Object.entries(SUBNETS)) {
+      nodes.add({id:s, label:s, color:"#555555", shape:"box", size:22});
+      edges.add({from:s, to:"roteador"});
+      for (const v of vs) {
+        nodes.add({id:v, label:v, color:"#2ecc71", size:20});
+        edges.add({from:v, to:s});
+      }
+    }
+
+    new vis.Network(document.getElementById("net"), {nodes, edges}, {
+      nodes: {font: {color:"#fff"}},
+      physics: {barnesHut: {springLength: 120}},
+    });
+
+    async function refresh() {
+      try {
+        const r = await fetch("/status");
+        const states = await r.json();
+        const updates = [];
+        let count = 0;
+        for (const [v, s] of Object.entries(states)) {
+          updates.push({id: v, color: s === "true" ? "#e74c3c" : "#2ecc71"});
+          if (s === "true") count++;
+        }
+        nodes.update(updates);
+        document.getElementById("count").textContent = `${count} / 25`;
+      } catch (e) { console.error(e); }
+    }
+
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>
