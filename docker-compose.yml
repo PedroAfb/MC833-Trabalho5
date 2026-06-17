@@ -52,8 +52,14 @@ services:
       - seccomp:unconfined
     tty: true
     stdin_open: true
+    volumes:
+      - ./atacante:/workspace
     networks:
       lab_net_01: { ipv4_address: 172.28.1.100 }
+      lab_net_02: { ipv4_address: 172.28.2.100 }
+      lab_net_03: { ipv4_address: 172.28.3.100 }
+      lab_net_04: { ipv4_address: 172.28.4.100 }
+      lab_net_05: { ipv4_address: 172.28.5.100 }
     depends_on: [roteador]
 
   # ---------- VÍTIMAS - sub-rede 01 ----------
